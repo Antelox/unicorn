@@ -68,6 +68,7 @@ jobs:
 
       # we re-tag the older python3 version wheel with py2 tag. Hacky but it works...
       - name: '🚧 Python 2.7 wheels re-tagging'
+        shell: bash
         run: |
           pip install -U wheel && python -m wheel tags --python-tag='py2' --abi-tag=none wheelhouse/unicorn-*-cp37*
 
