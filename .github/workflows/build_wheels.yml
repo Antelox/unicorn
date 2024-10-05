@@ -1,6 +1,18 @@
-name: Build
+name: Build wheels
 
-on: [push, pull_request]
+on:
+  push:
+    paths-ignore:
+      - ".gitignore"
+      - "docs/**"
+      - "README"
+      - "CREDITS.TXT"
+      - "COPYING_GLIB"
+      - "COPYING.LGPL2"
+      - "AUTHORS.TXT"
+      - "CHANGELOG"
+      - "COPYING"
+  pull_request:
 
 jobs:
   build_wheels:
@@ -8,21 +20,55 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # macos-13 is an intel runner, macos-14 is apple silicon
-        os: [ubuntu-latest, windows-latest, macos-13, macos-14]
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build wheels
+      - name: '🛠️ Add msbuild to PATH'
+        if: matrix.os == 'windows-latest'
+        uses: microsoft/setup-msbuild@v2
+        with:
+          vs-version: '16.5'
+
+      - name: '🛠️ Win build dependencies'
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          choco install ninja cmake
+
+      - name: '🛠️ macOS dependencies'
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install ninja
+
+      - name: '🛠️ Set up MSVC x64'
+        if: matrix.os == 'windows-latest'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: '🛠️ Set up QEMU'
+        if: runner.os == 'Linux'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: all
+
+      - name: '🚧 cibuildwheel run'
         uses: pypa/cibuildwheel@v2.21.2
         env:
           CIBW_BUILD_FRONTEND: build
           # CIBW_SKIP: '*36*'
+          CIBW_ARCHS_MACOS: "x86_64 universal2 arm64"
+          CIBW_ARCHS_LINUX: "x86_64 i686 aarch64"
+          CIBW_ARCHS_WINDOWS: "AMD64 x86 ARM64"
           CIBW_BUILD: 'cp312*'
         with:
           package-dir: bindings/python
           output-dir: wheelhouse
+
+      # we re-tag the older python3 version wheel with py2 tag. Hacky but it works...
+      - name: '🚧 Python 2.7 wheels re-tagging'
+        run: |
+          wheel tags --python-tag='py2' --abi-tag=none wheelhouse/unicorn-*-cp37*
 
       - uses: actions/upload-artifact@v4
         with:
