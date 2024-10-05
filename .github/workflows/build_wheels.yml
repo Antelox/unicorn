@@ -62,7 +62,8 @@ jobs:
           CIBW_ARCHS_LINUX: "x86_64"
           CIBW_BUILD: 'cp38*'
           CIBW_TEST_COMMAND: |
-            sh {package}/sample_all.sh
+            cd {package}/tests/
+            sh sample_all.sh
         with:
           package-dir: bindings/python
           output-dir: wheelhouse
