@@ -1,4 +1,4 @@
-name: Build wheels
+name: Build wheels with cibuildwheel
 
 on:
   push:
@@ -67,41 +67,41 @@ jobs:
         with:
           package-dir: bindings/python
           output-dir: wheelhouse
-#
-#      - name: '🚧 cibuildwheel run - Windows'
-#        if: matrix.os == 'windows-2019'
-#        uses: pypa/cibuildwheel@v2.21.2
-#        env:
-#          CIBW_BUILD_FRONTEND: build
-#          # CIBW_SKIP: '*36*'
-#          CIBW_ARCHS_WINDOWS: "AMD64"
-#          CIBW_BUILD: 'cp37*'
-#        with:
-#          package-dir: bindings/python
-#          output-dir: wheelhouse
-#
-#      - name: '🚧 cibuildwheel run - macos x86_84'
-#        if: matrix.os == 'macos-13'
-#        uses: pypa/cibuildwheel@v2.21.2
-#        env:
-#          CIBW_BUILD_FRONTEND: build
-#          # CIBW_SKIP: '*36*'
-#          CIBW_BUILD: 'cp38*'
-#        with:
-#          package-dir: bindings/python
-#          output-dir: wheelhouse
-#
-#      - name: '🚧 cibuildwheel run - macos arm64'
-#        if: matrix.os == 'macos-14'
-#        uses: pypa/cibuildwheel@v2.21.2
-#        env:
-#          CIBW_BUILD_FRONTEND: build
-#          # CIBW_SKIP: '*36* *37*'
-#          CIBW_BUILD: 'cp38*'
-#          CIBW_REPAIR_WHEEL_COMMAND: ''
-#        with:
-#          package-dir: bindings/python
-#          output-dir: wheelhouse
+
+      - name: '🚧 cibuildwheel run - Windows'
+        if: matrix.os == 'windows-2019'
+        uses: pypa/cibuildwheel@v2.21.2
+        env:
+          CIBW_BUILD_FRONTEND: build
+          # CIBW_SKIP: '*36*'
+          CIBW_ARCHS_WINDOWS: "AMD64"
+          CIBW_BUILD: 'cp37*'
+        with:
+          package-dir: bindings/python
+          output-dir: wheelhouse
+
+      - name: '🚧 cibuildwheel run - macos x86_84'
+        if: matrix.os == 'macos-13'
+        uses: pypa/cibuildwheel@v2.21.2
+        env:
+          CIBW_BUILD_FRONTEND: build
+          # CIBW_SKIP: '*36*'
+          CIBW_BUILD: 'cp38*'
+        with:
+          package-dir: bindings/python
+          output-dir: wheelhouse
+
+      - name: '🚧 cibuildwheel run - macos arm64'
+        if: matrix.os == 'macos-14'
+        uses: pypa/cibuildwheel@v2.21.2
+        env:
+          CIBW_BUILD_FRONTEND: build
+          # CIBW_SKIP: '*36* *37*'
+          CIBW_BUILD: 'cp38*'
+          CIBW_REPAIR_WHEEL_COMMAND: ''
+        with:
+          package-dir: bindings/python
+          output-dir: wheelhouse
 
       # we re-tag the older python3 version wheel with py2 tag. Hacky but it works...
       - name: '🚧 Python 2.7 wheels re-tagging - Windows'
