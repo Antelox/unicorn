@@ -1,4 +1,4 @@
-@echo off
+@echo on
 
 python .\sample_arm.py
 echo "=========================="
