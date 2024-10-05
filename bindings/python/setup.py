@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Python binding for Unicorn engine. Nguyen Anh Quynh <aquynh@gmail.com>
 
 from __future__ import print_function
@@ -12,7 +11,6 @@ import platform
 import setuptools
 
 from setuptools import setup
-from sysconfig import get_platform
 from setuptools.command.build import build
 from setuptools.command.sdist import sdist
 from setuptools.command.bdist_egg import bdist_egg
@@ -20,9 +18,6 @@ from setuptools.command.bdist_egg import bdist_egg
 log = logging.getLogger(__name__)
 
 SYSTEM = sys.platform
-
-# sys.maxint is 2**31 - 1 on both 32 and 64 bit mingw
-IS_64BITS = platform.architecture()[0] == '64bit'
 
 # are we building from the repository or from a source distribution?
 ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -44,9 +39,11 @@ else:
     LIBRARY_FILE = "libunicorn.so.2"
     STATIC_LIBRARY_FILE = "libunicorn.a"
 
+
 def clean_bins():
     shutil.rmtree(LIBS_DIR, ignore_errors=True)
     shutil.rmtree(HEADERS_DIR, ignore_errors=True)
+
 
 def copy_sources():
     """Copy the C sources into the source directory.
@@ -87,6 +84,7 @@ def copy_sources():
         log.info("%s -> %s" % (filename, outpath))
         shutil.copy(filename, outpath)
 
+
 def build_libraries():
     """
     Prepare the unicorn directory for a binary distribution or installation.
@@ -125,9 +123,11 @@ def build_libraries():
         conf = 'Debug' if os.getenv('DEBUG', '') else 'Release'
         if not os.path.exists(BUILD_DIR):
             os.mkdir(BUILD_DIR)
-        
-        subprocess.check_call(['cmake', '-B', BUILD_DIR, '-G', "Visual Studio 16 2019", "-A", plat, "-DCMAKE_BUILD_TYPE=" + conf])
-        subprocess.check_call(['msbuild', 'unicorn.sln', '-m', '-p:Platform=' + plat, '-p:Configuration=' + conf], cwd=BUILD_DIR)
+
+        subprocess.check_call(['cmake', '-B', BUILD_DIR, '-G', "Visual Studio 16 2019", "-A", plat,
+                               "-DCMAKE_BUILD_TYPE=" + conf])
+        subprocess.check_call(['msbuild', 'unicorn.sln', '-m', '-p:Platform=' + plat, '-p:Configuration=' + conf],
+                              cwd=BUILD_DIR)
 
         obj_dir = os.path.join(BUILD_DIR, conf)
         shutil.copy(os.path.join(obj_dir, LIBRARY_FILE), LIBS_DIR)
@@ -145,7 +145,7 @@ def build_libraries():
         os.chdir(BUILD_DIR)
         threads = os.getenv("THREADS", "4")
         subprocess.check_call(["cmake", "--build", ".", "-j" + threads])
-    
+
         shutil.copy(LIBRARY_FILE, LIBS_DIR)
         shutil.copy(STATIC_LIBRARY_FILE, LIBS_DIR)
 
@@ -158,6 +158,7 @@ class custom_sdist(sdist):
         copy_sources()
         return sdist.run(self)
 
+
 class custom_build(build):
     def run(self):
         if 'LIBUNICORN_PATH' in os.environ:
@@ -167,52 +168,29 @@ class custom_build(build):
             build_libraries()
         return build.run(self)
 
+
 class custom_bdist_egg(bdist_egg):
     def run(self):
         self.run_command('build')
         return bdist_egg.run(self)
 
-def dummy_src():
-    return []
 
-cmdclass = {}
-cmdclass['build'] = custom_build
-cmdclass['sdist'] = custom_sdist
-cmdclass['bdist_egg'] = custom_bdist_egg
-
-if 'bdist_wheel' in sys.argv and '--plat-name' not in sys.argv:
-    idx = sys.argv.index('bdist_wheel') + 1
-    sys.argv.insert(idx, '--plat-name')
-    name = get_platform()
-    if 'linux' in name:
-        # linux_* platform tags are disallowed because the python ecosystem is fubar
-        # linux builds should be built in the centos 5 vm for maximum compatibility
-        # see https://github.com/pypa/manylinux
-        # see also https://github.com/angr/angr-dev/blob/master/bdist.sh
-        sys.argv.insert(idx + 1, 'manylinux1_' + platform.machine())
-    elif 'mingw' in name:
-        if IS_64BITS:
-            sys.argv.insert(idx + 1, 'win_amd64')
-        else:
-            sys.argv.insert(idx + 1, 'win32')
-    else:
-        # https://www.python.org/dev/peps/pep-0425/
-        sys.argv.insert(idx + 1, name.replace('.', '_').replace('-', '_'))
+cmdclass = {'build': custom_build, 'sdist': custom_sdist, 'bdist_egg': custom_bdist_egg}
 
 try:
     from setuptools.command.develop import develop
+
+
     class custom_develop(develop):
         def run(self):
             log.info("Building C extensions")
             build_libraries()
             return develop.run(self)
 
+
     cmdclass['develop'] = custom_develop
 except ImportError:
     print("Proper 'develop' support unavailable.")
-
-def join_all(src, files):
-    return tuple(os.path.join(src, f) for f in files)
 
 long_desc = '''
 Unicorn is a lightweight, multi-platform, multi-architecture CPU emulator framework
@@ -233,6 +211,7 @@ Further information is available at http://www.unicorn-engine.org
 '''
 
 setup(
+    python_requires=">= 2.7, != 3.0.*, != 3.1.*, != 3.2.*, != 3.3.*, != 3.4.*, != 3.5.*, != 3.6.*",
     provides=['unicorn'],
     packages=setuptools.find_packages(include=["unicorn", "unicorn.*"]),
     name='unicorn',
@@ -245,14 +224,21 @@ setup(
     url='http://www.unicorn-engine.org',
     classifiers=[
         'License :: OSI Approved :: BSD License',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
     ],
     requires=['ctypes'],
     cmdclass=cmdclass,
     zip_safe=False,
     include_package_data=True,
     is_pure=False,
+    has_ext_modules=lambda: True,
     package_data={
         'unicorn': ['unicorn/py.typed', 'lib/*', 'include/unicorn/*']
     }
