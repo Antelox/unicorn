@@ -58,9 +58,9 @@ jobs:
         uses: pypa/cibuildwheel@v2.21.2
         env:
           CIBW_BUILD_FRONTEND: build
-          # CIBW_SKIP: '*36*'
+          CIBW_SKIP: '*36*'
+          CIBW_BUILD: 'cp*'
           CIBW_ARCHS_LINUX: "x86_64"
-          CIBW_BUILD: 'cp38*'
           CIBW_TEST_COMMAND: |
             cd {package}/tests/
             sh sample_all.sh
@@ -73,9 +73,10 @@ jobs:
         uses: pypa/cibuildwheel@v2.21.2
         env:
           CIBW_BUILD_FRONTEND: build
-          # CIBW_SKIP: '*36*'
+          CIBW_SKIP: '*36*'
+          CIBW_BUILD: 'cp*'
           CIBW_ARCHS_WINDOWS: "AMD64"
-          CIBW_BUILD: 'cp37*'
+          CIBW_TEST_COMMAND: "python -V"
         with:
           package-dir: bindings/python
           output-dir: wheelhouse
@@ -85,8 +86,11 @@ jobs:
         uses: pypa/cibuildwheel@v2.21.2
         env:
           CIBW_BUILD_FRONTEND: build
-          # CIBW_SKIP: '*36*'
-          CIBW_BUILD: 'cp38*'
+          CIBW_SKIP: '*36*'
+          CIBW_BUILD: 'cp*'
+          CIBW_TEST_COMMAND: |
+            cd {package}/tests/
+            sh sample_all.sh
         with:
           package-dir: bindings/python
           output-dir: wheelhouse
@@ -96,9 +100,12 @@ jobs:
         uses: pypa/cibuildwheel@v2.21.2
         env:
           CIBW_BUILD_FRONTEND: build
-          # CIBW_SKIP: '*36* *37*'
-          CIBW_BUILD: 'cp38*'
+          CIBW_SKIP: '*36* *37*'
+          CIBW_BUILD: 'cp*'
           CIBW_REPAIR_WHEEL_COMMAND: ''
+          CIBW_TEST_COMMAND: |
+            cd {package}/tests/
+            sh sample_all.sh
         with:
           package-dir: bindings/python
           output-dir: wheelhouse
