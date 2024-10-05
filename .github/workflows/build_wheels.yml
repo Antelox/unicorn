@@ -21,30 +21,30 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-latest, macos-13 ]
+        os: [ ubuntu-latest, windows-2019, macos-13, macos-latest ]
 
     steps:
       - uses: actions/checkout@v4
 
       - name: '🛠️ Add msbuild to PATH'
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2019'
         uses: microsoft/setup-msbuild@v2
         with:
           vs-version: '16.5'
 
       - name: '🛠️ Win build dependencies'
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2019'
         shell: bash
         run: |
           choco install ninja cmake
 
       - name: '🛠️ macOS dependencies'
-        if: matrix.os == 'macos-latest'
+        if: contains(matrix.os, 'macos')
         run: |
           brew install ninja
 
       - name: '🛠️ Set up MSVC x64'
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2019'
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: '🛠️ Set up QEMU'
