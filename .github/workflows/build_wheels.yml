@@ -53,53 +53,68 @@ jobs:
         with:
           platforms: all
 
-      - name: '🚧 cibuildwheel run'
+      - name: '🚧 cibuildwheel run - Linux'
+        if: matrix.os == 'ubuntu-latest'
         uses: pypa/cibuildwheel@v2.21.2
         env:
           CIBW_BUILD_FRONTEND: build
           # CIBW_SKIP: '*36*'
-          CIBW_ARCHS_LINUX: "x86_64 i686 aarch64"
-          CIBW_ARCHS_WINDOWS: "AMD64"
-          CIBW_BUILD: 'cp312*'
+          CIBW_ARCHS_LINUX: "x86_64"
+          CIBW_BUILD: 'cp38*'
+          CIBW_TEST_COMMAND: |
+            sh {package}/sample_all.sh
         with:
           package-dir: bindings/python
           output-dir: wheelhouse
-
-      - name: '🚧 cibuildwheel run - macos x86_84'
-        if: matrix.os == 'macos-13'
-        uses: pypa/cibuildwheel@v2.21.2
-        env:
-          CIBW_BUILD_FRONTEND: build
-          # CIBW_SKIP: '*36*'
-          CIBW_ARCHS_MACOS: "x86_64"
-          CIBW_BUILD: 'cp312*'
-        with:
-          package-dir: bindings/python
-          output-dir: wheelhouse
-
-      - name: '🚧 cibuildwheel run - macos arm64'
-        if: matrix.os == 'macos-14'
-        uses: pypa/cibuildwheel@v2.21.2
-        env:
-          CIBW_BUILD_FRONTEND: build
-          # CIBW_SKIP: '*36*'
-          CIBW_ARCHS_MACOS: "arm64"
-          CIBW_BUILD: 'cp312*'
-        with:
-          package-dir: bindings/python
-          output-dir: wheelhouse
+#
+#      - name: '🚧 cibuildwheel run - Windows'
+#        if: matrix.os == 'windows-2019'
+#        uses: pypa/cibuildwheel@v2.21.2
+#        env:
+#          CIBW_BUILD_FRONTEND: build
+#          # CIBW_SKIP: '*36*'
+#          CIBW_ARCHS_WINDOWS: "AMD64"
+#          CIBW_BUILD: 'cp37*'
+#        with:
+#          package-dir: bindings/python
+#          output-dir: wheelhouse
+#
+#      - name: '🚧 cibuildwheel run - macos x86_84'
+#        if: matrix.os == 'macos-13'
+#        uses: pypa/cibuildwheel@v2.21.2
+#        env:
+#          CIBW_BUILD_FRONTEND: build
+#          # CIBW_SKIP: '*36*'
+#          CIBW_BUILD: 'cp38*'
+#        with:
+#          package-dir: bindings/python
+#          output-dir: wheelhouse
+#
+#      - name: '🚧 cibuildwheel run - macos arm64'
+#        if: matrix.os == 'macos-14'
+#        uses: pypa/cibuildwheel@v2.21.2
+#        env:
+#          CIBW_BUILD_FRONTEND: build
+#          # CIBW_SKIP: '*36* *37*'
+#          CIBW_BUILD: 'cp38*'
+#          CIBW_REPAIR_WHEEL_COMMAND: ''
+#        with:
+#          package-dir: bindings/python
+#          output-dir: wheelhouse
 
       # we re-tag the older python3 version wheel with py2 tag. Hacky but it works...
       - name: '🚧 Python 2.7 wheels re-tagging - Windows'
         if: matrix.os == 'windows-2019'
         run: |
-          pip install -U wheel && Get-ChildItem -Path wheelhouse/ -Filter unicorn-*-cp37*.whl | Foreach-Object {
+          python -m pip install -U pip wheel && Get-ChildItem -Path wheelhouse/ -Filter *cp37*.whl | Foreach-Object {
             python -m wheel tags --python-tag='py2' --abi-tag=none $_.FullName
           }
       - name: '🚧 Python 2.7 wheels re-tagging - Non-Windows'
         if: matrix.os != 'windows-2019'
+        env:
+          PIP_BREAK_SYSTEM_PACKAGES: 1
         run: |
-          pip install -U wheel && python -m wheel tags --python-tag='py2' --abi-tag=none unicorn-*-cp37*.whl
+          python3 -m pip install -U pip wheel && python3 -m wheel tags --python-tag='py2' --abi-tag=none wheelhouse/*cp38*.whl
 
       - uses: actions/upload-artifact@v4
         with:
