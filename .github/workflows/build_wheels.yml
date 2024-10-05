@@ -67,11 +67,16 @@ jobs:
           output-dir: wheelhouse
 
       # we re-tag the older python3 version wheel with py2 tag. Hacky but it works...
-      - name: '🚧 Python 2.7 wheels re-tagging'
+      - name: '🚧 Python 2.7 wheels re-tagging - Windows'
+        if: matrix.os == 'windows-2019'
         run: |
           pip install -U wheel && Get-ChildItem -Path wheelhouse/ -Filter unicorn-*-cp37*.whl | Foreach-Object {
             python -m wheel tags --python-tag='py2' --abi-tag=none $_.FullName
           }
+      - name: '🚧 Python 2.7 wheels re-tagging - Non-Windows'
+        if: matrix.os != 'windows-2019'
+        run: |
+          pip install -U wheel && python -m wheel tags --python-tag='py2' --abi-tag=none unicorn-*-cp37*.whl
 
       - uses: actions/upload-artifact@v4
         with:
