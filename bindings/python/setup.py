@@ -1,23 +1,18 @@
 # Python binding for Unicorn engine. Nguyen Anh Quynh <aquynh@gmail.com>
 
-from __future__ import print_function
 import glob
 import logging
 import os
-import subprocess
-import shutil
-import sys
 import platform
-import setuptools
-
+import shutil
+import subprocess
+import sys
 from setuptools import setup
 from setuptools.command.build import build
 from setuptools.command.sdist import sdist
 from setuptools.command.bdist_egg import bdist_egg
 
 log = logging.getLogger(__name__)
-
-SYSTEM = sys.platform
 
 # are we building from the repository or from a source distribution?
 ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -27,12 +22,10 @@ SRC_DIR = os.path.join(ROOT_DIR, 'src')
 UC_DIR = SRC_DIR if os.path.exists(SRC_DIR) else os.path.join(ROOT_DIR, '../..')
 BUILD_DIR = os.path.join(UC_DIR, 'build_python')
 
-VERSION = "2.1.1"
-
-if SYSTEM == 'darwin':
+if sys.platform == 'darwin':
     LIBRARY_FILE = "libunicorn.2.dylib"
     STATIC_LIBRARY_FILE = "libunicorn.a"
-elif SYSTEM in ('win32', 'cygwin'):
+elif sys.platform in ('win32', 'cygwin'):
     LIBRARY_FILE = "unicorn.dll"
     STATIC_LIBRARY_FILE = "unicorn.lib"
 else:
@@ -46,12 +39,11 @@ def clean_bins():
 
 
 def copy_sources():
-    """Copy the C sources into the source directory.
+    """
+    Copy the C sources into the source directory.
     This rearranges the source files under the python distribution
     directory.
     """
-    src = []
-
     shutil.rmtree(SRC_DIR, ignore_errors=True)
     os.mkdir(SRC_DIR)
 
@@ -64,12 +56,12 @@ def copy_sources():
     shutil.copytree(os.path.join(ROOT_DIR, '../../glib_compat'), os.path.join(SRC_DIR, 'glib_compat/'))
 
     try:
-        # remove site-specific configuration file
-        # might not exist
+        # remove site-specific configuration file, might not exist
         os.remove(os.path.join(SRC_DIR, 'qemu/config-host.mak'))
     except OSError:
         pass
 
+    src = []
     src.extend(glob.glob(os.path.join(ROOT_DIR, "../../*.[ch]")))
     src.extend(glob.glob(os.path.join(ROOT_DIR, "../../*.mk")))
     src.extend(glob.glob(os.path.join(ROOT_DIR, "../../cmake/*.cmake")))
@@ -100,8 +92,7 @@ def build_libraries():
     # copy public headers
     shutil.copytree(os.path.join(UC_DIR, 'include', 'unicorn'), os.path.join(HEADERS_DIR, 'unicorn'))
 
-    # check if a prebuilt library exists
-    # if so, use it instead of building
+    # check if a prebuilt library exists and if so, use it instead of building
     if os.path.exists(os.path.join(ROOT_DIR, 'prebuilt', LIBRARY_FILE)):
         shutil.copy(os.path.join(ROOT_DIR, 'prebuilt', LIBRARY_FILE), LIBS_DIR)
         if STATIC_LIBRARY_FILE is not None and os.path.exists(os.path.join(ROOT_DIR, 'prebuilt', STATIC_LIBRARY_FILE)):
@@ -110,6 +101,8 @@ def build_libraries():
 
     # otherwise, build!!
     os.chdir(UC_DIR)
+    if not os.path.exists(BUILD_DIR):
+        os.mkdir(BUILD_DIR)
 
     try:
         subprocess.check_call(['msbuild', '/help'])
@@ -118,11 +111,9 @@ def build_libraries():
     else:
         has_msbuild = True
 
-    if has_msbuild and SYSTEM == 'win32':
+    conf = 'Debug' if os.getenv('DEBUG') else 'Release'
+    if has_msbuild and sys.platform == 'win32':
         plat = 'Win32' if platform.architecture()[0] == '32bit' else 'x64'
-        conf = 'Debug' if os.getenv('DEBUG', '') else 'Release'
-        if not os.path.exists(BUILD_DIR):
-            os.mkdir(BUILD_DIR)
 
         subprocess.check_call(['cmake', '-B', BUILD_DIR, '-G', "Visual Studio 16 2019", "-A", plat,
                                "-DCMAKE_BUILD_TYPE=" + conf])
@@ -133,13 +124,8 @@ def build_libraries():
         shutil.copy(os.path.join(obj_dir, LIBRARY_FILE), LIBS_DIR)
         shutil.copy(os.path.join(BUILD_DIR, STATIC_LIBRARY_FILE), LIBS_DIR)
     else:
-        # platform description refs at https://docs.python.org/2/library/sys.html#sys.platform
-        if not os.path.exists(BUILD_DIR):
-            os.mkdir(BUILD_DIR)
-        conf = 'Debug' if os.getenv('DEBUG', '') else 'Release'
-
         cmake_args = ["cmake", '-B', BUILD_DIR, '-S', UC_DIR, "-DCMAKE_BUILD_TYPE=" + conf]
-        if os.getenv("TRACE", ""):
+        if os.getenv("TRACE"):
             cmake_args += ["-DUNICORN_TRACER=on"]
         subprocess.check_call(cmake_args)
         os.chdir(BUILD_DIR)
@@ -152,94 +138,49 @@ def build_libraries():
     os.chdir(cwd)
 
 
-class custom_sdist(sdist):
+class CustomSDist(sdist):
     def run(self):
         clean_bins()
         copy_sources()
-        return sdist.run(self)
+        return super().run()
 
 
-class custom_build(build):
+class CustomBuild(build):
     def run(self):
         if 'LIBUNICORN_PATH' in os.environ:
             log.info("Skipping building C extensions since LIBUNICORN_PATH is set")
         else:
             log.info("Building C extensions")
             build_libraries()
-        return build.run(self)
+        return super().run()
 
 
-class custom_bdist_egg(bdist_egg):
+class CustomBDistEgg(bdist_egg):
     def run(self):
         self.run_command('build')
-        return bdist_egg.run(self)
+        return super().run()
 
 
-cmdclass = {'build': custom_build, 'sdist': custom_sdist, 'bdist_egg': custom_bdist_egg}
+cmdclass = {'build': CustomBuild, 'sdist': CustomSDist, 'bdist_egg': CustomBDistEgg}
 
 try:
     from setuptools.command.develop import develop
 
 
-    class custom_develop(develop):
+    class CustomDevelop(develop):
         def run(self):
             log.info("Building C extensions")
             build_libraries()
-            return develop.run(self)
+            return super().run()
 
 
-    cmdclass['develop'] = custom_develop
+    cmdclass['develop'] = CustomDevelop
 except ImportError:
     print("Proper 'develop' support unavailable.")
 
-long_desc = '''
-Unicorn is a lightweight, multi-platform, multi-architecture CPU emulator framework
-based on [QEMU](http://qemu.org).
-
-Unicorn offers some unparalleled features:
-
-- Multi-architecture: ARM, ARM64 (ARMv8), M68K, MIPS, PowerPC, RISCV, SPARC, S390X, TriCore and X86 (16, 32, 64-bit)
-- Clean/simple/lightweight/intuitive architecture-neutral API
-- Implemented in pure C language, with bindings for Crystal, Clojure, Visual Basic, Perl, Rust, Ruby, Python, Java, .NET, Go, Delphi/Free Pascal, Haskell, Pharo, and Lua.
-- Native support for Windows & *nix (with Mac OSX, Linux, *BSD & Solaris confirmed)
-- High performance via Just-In-Time compilation
-- Support for fine-grained instrumentation at various levels
-- Thread-safety by design
-- Distributed under free software license GPLv2
-
-Further information is available at http://www.unicorn-engine.org
-'''
-
 setup(
-    python_requires=">= 2.7, != 3.0.*, != 3.1.*, != 3.2.*, != 3.3.*, != 3.4.*, != 3.5.*, != 3.6.*",
-    provides=['unicorn'],
-    packages=setuptools.find_packages(include=["unicorn", "unicorn.*"]),
-    name='unicorn',
-    version=VERSION,
-    author='Nguyen Anh Quynh',
-    author_email='aquynh@gmail.com',
-    description='Unicorn CPU emulator engine',
-    long_description=long_desc,
-    long_description_content_type="text/markdown",
-    url='http://www.unicorn-engine.org',
-    classifiers=[
-        'License :: OSI Approved :: BSD License',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
-        'Programming Language :: Python :: 3.10',
-        'Programming Language :: Python :: 3.11',
-        'Programming Language :: Python :: 3.12',
-        'Programming Language :: Python :: 3.13',
-    ],
-    requires=['ctypes'],
     cmdclass=cmdclass,
     zip_safe=False,
-    include_package_data=True,
     is_pure=False,
     has_ext_modules=lambda: True,
-    package_data={
-        'unicorn': ['unicorn/py.typed', 'lib/*', 'include/unicorn/*']
-    }
 )
