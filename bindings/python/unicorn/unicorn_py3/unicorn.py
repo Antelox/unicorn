@@ -85,6 +85,7 @@ def __load_uc_lib() -> ctypes.CDLL:
         try:
             return ctypes.cdll.LoadLibrary(str(lib_file))
         except OSError:
+            traceback.print_exc()
             return None
 
     # Loading attempts, in order
@@ -140,7 +141,9 @@ def __load_uc_lib() -> ctypes.CDLL:
 
             return next((elem for elem in it if elem is not None), None)
 
-        return __pick_first_valid(_load_lib(loc, libname) for loc in lib_locations)
+        attempts =[_load_lib(loc, libname) for loc in lib_locations]
+        print(attempts)
+        return __pick_first_valid(attempts)
 
     lib = __attempt_load(lib_name) or __attempt_load('libunicorn.so')
 
