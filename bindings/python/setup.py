@@ -104,14 +104,9 @@ def build_libraries():
     if not os.path.exists(BUILD_DIR):
         os.mkdir(BUILD_DIR)
 
-    try:
-        subprocess.check_call(['msbuild', '/help'])
-    except:
-        has_msbuild = False
-    else:
-        has_msbuild = True
-
+    has_msbuild = shutil.which('msbuild') is not None
     conf = 'Debug' if os.getenv('DEBUG') else 'Release'
+
     if has_msbuild and sys.platform == 'win32':
         plat = 'Win32' if platform.architecture()[0] == '32bit' else 'x64'
 
