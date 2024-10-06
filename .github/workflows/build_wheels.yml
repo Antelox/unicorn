@@ -95,24 +95,25 @@ jobs:
 #          package-dir: bindings/python
 #          output-dir: wheelhouse
 
-      - name: '🚧 cibuildwheel run - macos arm64'
-        if: matrix.os == 'macos-14'
-        uses: pypa/cibuildwheel@v2.21.2
-        env:
-          CIBW_BUILD_FRONTEND: build
-          CIBW_ARCHS_MACOS: "arm64"
-          CIBW_SKIP: '*36* *37*'
-          CIBW_BUILD: 'cp*'
-#          CIBW_REPAIR_WHEEL_COMMAND: ''
-          CIBW_TEST_REQUIRES: pytest
-          CIBW_TEST_COMMAND: pytest {package}/tests
-          # https://github.com/pypa/cibuildwheel/pull/1169
-          CIBW_TEST_SKIP: "cp38-macosx_*:arm64"
-          _PYTHON_HOST_PLATFORM: "macosx-11.0-arm64"
-          ARCHFLAGS: "-arch arm64"
-        with:
-          package-dir: bindings/python
-          output-dir: wheelhouse
+# TODO: Investigate
+#      - name: '🚧 cibuildwheel run - macos arm64'
+#        if: matrix.os == 'macos-14'
+#        uses: pypa/cibuildwheel@v2.21.2
+#        env:
+#          CIBW_BUILD_FRONTEND: build
+#          CIBW_ARCHS_MACOS: "arm64"
+#          CIBW_SKIP: '*36* *37*'
+#          CIBW_BUILD: 'cp*'
+#          # CIBW_REPAIR_WHEEL_COMMAND: ''
+#          CIBW_TEST_REQUIRES: pytest
+#          CIBW_TEST_COMMAND: pytest {package}/tests
+#          # https://github.com/pypa/cibuildwheel/pull/1169
+#          CIBW_TEST_SKIP: "cp38-macosx_*:arm64"
+#          _PYTHON_HOST_PLATFORM: "macosx-11.0-arm64"
+#          ARCHFLAGS: "-arch arm64"
+#        with:
+#          package-dir: bindings/python
+#          output-dir: wheelhouse
 
       # we re-tag the older python3 version wheel with py2 tag. Hacky but it works...
       - name: '🚧 Python 2.7 wheels re-tagging - Windows'
@@ -132,3 +133,22 @@ jobs:
         with:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: ./wheelhouse/*.whl
+
+  make_sdist:
+    name: Make SDist
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Optional, use if you use setuptools_scm
+        submodules: true  # Optional, use if you have submodules
+
+    - name: Build SDist
+      run: |
+        cd bindings/python
+        python3 -m pip install -U pip build
+        python3 -m build --sdist
+
+    - uses: actions/upload-artifact@v4
+      with:
+        path: bindings/python/dist/*.tar.gz
