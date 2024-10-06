@@ -61,9 +61,8 @@ jobs:
 #          CIBW_SKIP: '*36*'
 #          CIBW_BUILD: 'cp*'
 #          CIBW_ARCHS_LINUX: "x86_64"
-#          CIBW_TEST_COMMAND: |
-#            cd {package}/tests/
-#            sh sample_all.sh
+#          CIBW_TEST_REQUIRES: pytest
+#          CIBW_TEST_COMMAND: pytest {package}/tests
 #        with:
 #          package-dir: bindings/python
 #          output-dir: wheelhouse
@@ -76,9 +75,8 @@ jobs:
 #          CIBW_SKIP: '*36*'
 #          CIBW_BUILD: 'cp*'
 #          CIBW_ARCHS_WINDOWS: "AMD64"
-#          CIBW_TEST_COMMAND: |
-#            cd /d {package}\tests\
-#            start /wait sample_all.bat
+#          CIBW_TEST_REQUIRES: pytest
+#          CIBW_TEST_COMMAND: pytest {package}/tests
 #        with:
 #          package-dir: bindings/python
 #          output-dir: wheelhouse
@@ -90,9 +88,8 @@ jobs:
 #          CIBW_BUILD_FRONTEND: build
 #          CIBW_SKIP: '*36*'
 #          CIBW_BUILD: 'cp*'
-#          CIBW_TEST_COMMAND: |
-#            cd {package}/tests/
-#            sh sample_all.sh
+#          CIBW_TEST_REQUIRES: pytest
+#          CIBW_TEST_COMMAND: pytest {package}/tests
 #        with:
 #          package-dir: bindings/python
 #          output-dir: wheelhouse
@@ -105,9 +102,10 @@ jobs:
           CIBW_SKIP: '*36* *37* *39*'
           CIBW_BUILD: 'cp*'
           CIBW_REPAIR_WHEEL_COMMAND: ''
-          CIBW_TEST_COMMAND: |
-            cd {package}/tests/
-            sh sample_all.sh
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_COMMAND: pytest {package}/tests
+          # https://github.com/pypa/cibuildwheel/pull/1169
+          CIBW_TEST_SKIP: "cp38-macosx_*:arm64"
         with:
           package-dir: bindings/python
           output-dir: wheelhouse
