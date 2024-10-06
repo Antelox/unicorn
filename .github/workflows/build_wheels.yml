@@ -86,6 +86,7 @@ jobs:
 #        uses: pypa/cibuildwheel@v2.21.2
 #        env:
 #          CIBW_BUILD_FRONTEND: build
+#          CIBW_ARCHS_MACOS: "x86_64"
 #          CIBW_SKIP: '*36*'
 #          CIBW_BUILD: 'cp*'
 #          CIBW_TEST_REQUIRES: pytest
@@ -93,20 +94,22 @@ jobs:
 #        with:
 #          package-dir: bindings/python
 #          output-dir: wheelhouse
-#
+
       - name: '🚧 cibuildwheel run - macos arm64'
         if: matrix.os == 'macos-14'
         uses: pypa/cibuildwheel@v2.21.2
         env:
           CIBW_BUILD_FRONTEND: build
-          CIBW_ARCHS_MACOS: "universal2"
-          CIBW_SKIP: '*36* *37* *39*'
+          CIBW_ARCHS_MACOS: "arm64"
+          CIBW_SKIP: '*36* *37*'
           CIBW_BUILD: 'cp*'
-          CIBW_REPAIR_WHEEL_COMMAND: ''
+#          CIBW_REPAIR_WHEEL_COMMAND: ''
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: pytest {package}/tests
           # https://github.com/pypa/cibuildwheel/pull/1169
           CIBW_TEST_SKIP: "cp38-macosx_*:arm64"
+          _PYTHON_HOST_PLATFORM: "macosx-11.0-arm64"
+          ARCHFLAGS: "-arch arm64"
         with:
           package-dir: bindings/python
           output-dir: wheelhouse
