@@ -3,6 +3,8 @@ based on Nguyen Anh Quynnh's work
 """
 
 from __future__ import annotations
+
+import traceback
 from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, Mapping, MutableMapping, Optional, Sequence, Tuple, Type, TypeVar
 
 import ctypes
@@ -99,12 +101,14 @@ def __load_uc_lib() -> ctypes.CDLL:
             resources.files("unicorn") / 'lib'
         )
     except:
+        traceback.print_exc()
         try:
             import pkg_resources
             canonicals.append(
                 pkg_resources.resource_filename("unicorn", 'lib')
             )
         except:
+            traceback.print_exc()
             # maybe importlib_resources, but ignore for now
             pass
     
@@ -118,7 +122,7 @@ def __load_uc_lib() -> ctypes.CDLL:
 
     # filter out None elements
     lib_locations = tuple(Path(loc) for loc in lib_locations if loc is not None)
-
+    print(lib_locations)
     lib_name = {
         'cygwin': 'cygunicorn.dll',
         'darwin': 'libunicorn.2.dylib',
