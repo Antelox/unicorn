@@ -175,7 +175,5 @@ except ImportError:
 
 setup(
     cmdclass=cmdclass,
-    zip_safe=False,
-    is_pure=False,
     has_ext_modules=lambda: True,
 )

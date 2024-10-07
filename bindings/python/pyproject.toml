@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools", "build", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -30,8 +30,11 @@ Repository = "https://github.com/unicorn-engine/unicorn"
 "Bug Tracker" = "https://github.com/unicorn-engine/unicorn/issues"
 Changelog = "https://github.com/unicorn-engine/unicorn/blob/master/ChangeLog"
 
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-cov",
+]
+
 [tool.setuptools.packages.find]
 include = ["unicorn*"]
-
-[tool.setuptools.package-data]
-unicorn = ['unicorn/py.typed', 'lib/*', 'include/unicorn/*']

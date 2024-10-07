@@ -21,7 +21,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-2019, macos-13, macos-14 ]
+# TODO: Re-enable macos-14 once arm build job will be fixed
+#        os: [ ubuntu-latest, windows-2019, macos-13, macos-14 ]
+        os: [ ubuntu-latest, windows-2019, macos-13 ]
 
     steps:
       - uses: actions/checkout@v4
