@@ -45,13 +45,15 @@ jobs:
 
       # https://cibuildwheel.pypa.io/en/stable/faq/#macos-building-cpython-38-wheels-on-arm64
       - uses: actions/setup-python@v5
+        if: runner.os == 'macOS' && runner.arch == 'ARM64'
         with:
           python-version: 3.8
-        if: runner.os == 'macOS' && runner.arch == 'ARM64'
 
-      - name: '🛠️ Set up MSVC x64'
-        if: matrix.os == 'windows-2019'
+      - name: '🛠️ Set up MSVC x86/x64'
         uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+        with:
+          arch: amd64_x86
 
       - name: '🛠️ Set up QEMU'
         if: runner.os == 'Linux'
@@ -59,64 +61,64 @@ jobs:
         with:
           platforms: all
 
-      - name: '🚧 cibuildwheel run - Linux'
-        if: matrix.os == 'ubuntu-latest'
+#      - name: '🚧 cibuildwheel run - Linux'
+#        if: matrix.os == 'ubuntu-latest'
+#        uses: pypa/cibuildwheel@v2.21.2
+#        env:
+#          CIBW_BUILD_FRONTEND: build
+#          CIBW_SKIP: '*36*'
+#          CIBW_BUILD: 'cp*'
+#          # TODO: Check wheels for i686. Segfault error during pytest execution...
+#          CIBW_ARCHS_LINUX: "x86_64 aarch64"
+#          CIBW_TEST_REQUIRES: pytest
+#          CIBW_TEST_COMMAND: pytest {package}/tests
+#        with:
+#          package-dir: bindings/python
+#          output-dir: wheelhouse
+
+      - name: '🚧 cibuildwheel run - Windows'
+        if: matrix.os == 'windows-2019'
         uses: pypa/cibuildwheel@v2.21.2
         env:
           CIBW_BUILD_FRONTEND: build
           CIBW_SKIP: '*36*'
-          CIBW_BUILD: 'cp*'
-          # TODO: Check wheels for i686. Segfault error during pytest execution...
-          CIBW_ARCHS_LINUX: "x86_64 aarch64"
+          CIBW_BUILD: 'cp38*'
+          CIBW_ARCHS_WINDOWS: "x86 AMD64"
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: pytest {package}/tests
         with:
           package-dir: bindings/python
           output-dir: wheelhouse
 #
-#      - name: '🚧 cibuildwheel run - Windows'
-#        if: matrix.os == 'windows-2019'
+#      - name: '🚧 cibuildwheel run - macos x86_84'
+#        if: matrix.os == 'macos-13'
 #        uses: pypa/cibuildwheel@v2.21.2
 #        env:
 #          CIBW_BUILD_FRONTEND: build
+#          CIBW_ARCHS_MACOS: "x86_64"
 #          CIBW_SKIP: '*36*'
 #          CIBW_BUILD: 'cp*'
-#          CIBW_ARCHS_WINDOWS: "AMD64"
 #          CIBW_TEST_REQUIRES: pytest
 #          CIBW_TEST_COMMAND: pytest {package}/tests
 #        with:
 #          package-dir: bindings/python
 #          output-dir: wheelhouse
 #
-      - name: '🚧 cibuildwheel run - macos x86_84'
-        if: matrix.os == 'macos-13'
-        uses: pypa/cibuildwheel@v2.21.2
-        env:
-          CIBW_BUILD_FRONTEND: build
-          CIBW_ARCHS_MACOS: "x86_64"
-          CIBW_SKIP: '*36*'
-          CIBW_BUILD: 'cp*'
-          CIBW_TEST_REQUIRES: pytest
-          CIBW_TEST_COMMAND: pytest {package}/tests
-        with:
-          package-dir: bindings/python
-          output-dir: wheelhouse
-
-      - name: '🚧 cibuildwheel run - macos arm64'
-        if: matrix.os == 'macos-14'
-        uses: pypa/cibuildwheel@v2.21.2
-        env:
-          CIBW_BUILD_FRONTEND: build
-          CIBW_ARCHS_MACOS: "arm64"
-          CIBW_SKIP: '*36* *37*'
-          CIBW_BUILD: 'cp*'
-          CIBW_TEST_REQUIRES: pytest
-          CIBW_TEST_COMMAND: pytest {package}/tests
-          # https://github.com/pypa/cibuildwheel/pull/1169
-          CIBW_TEST_SKIP: "cp38-macosx_*:arm64"
-        with:
-          package-dir: bindings/python
-          output-dir: wheelhouse
+#      - name: '🚧 cibuildwheel run - macos arm64'
+#        if: matrix.os == 'macos-14'
+#        uses: pypa/cibuildwheel@v2.21.2
+#        env:
+#          CIBW_BUILD_FRONTEND: build
+#          CIBW_ARCHS_MACOS: "arm64"
+#          CIBW_SKIP: '*36* *37*'
+#          CIBW_BUILD: 'cp*'
+#          CIBW_TEST_REQUIRES: pytest
+#          CIBW_TEST_COMMAND: pytest {package}/tests
+#          # https://github.com/pypa/cibuildwheel/pull/1169
+#          CIBW_TEST_SKIP: "cp38-macosx_*:arm64"
+#        with:
+#          package-dir: bindings/python
+#          output-dir: wheelhouse
 
       # we re-tag the older python3 version wheel with py2 tag. Hacky but it works...
       - name: '🚧 Python 2.7 wheels re-tagging - Windows'
