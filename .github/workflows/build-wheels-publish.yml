@@ -21,9 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-# TODO: Re-enable macos-14 once arm build job will be fixed
         os: [ ubuntu-latest, windows-2019, macos-13, macos-14 ]
-#        os: [ ubuntu-latest, windows-2019, macos-13 ]
 
     steps:
       - uses: actions/checkout@v4
@@ -40,11 +38,12 @@ jobs:
         run: |
           choco install ninja cmake
 
-#      - name: '🛠️ macOS dependencies'
-#        if: contains(matrix.os, 'macos')
-#        run: |
-#          brew install ninja
+      - name: '🛠️ macOS dependencies'
+        if: contains(matrix.os, 'macos')
+        run: |
+          brew install ninja
 
+      # https://cibuildwheel.pypa.io/en/stable/faq/#macos-building-cpython-38-wheels-on-arm64
       - uses: actions/setup-python@v5
         with:
           python-version: 3.8
@@ -55,24 +54,25 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: '🛠️ Set up QEMU'
-        if: matrix.os == 'ubuntu-latest'
+        if: runner.os == 'Linux'
         uses: docker/setup-qemu-action@v3
         with:
           platforms: all
 
-#      - name: '🚧 cibuildwheel run - Linux'
-#        if: matrix.os == 'ubuntu-latest'
-#        uses: pypa/cibuildwheel@v2.21.2
-#        env:
-#          CIBW_BUILD_FRONTEND: build
-#          CIBW_SKIP: '*36*'
-#          CIBW_BUILD: 'cp*'
-#          CIBW_ARCHS_LINUX: "x86_64 i686 aarch64"
-#          CIBW_TEST_REQUIRES: pytest
-#          CIBW_TEST_COMMAND: pytest {package}/tests
-#        with:
-#          package-dir: bindings/python
-#          output-dir: wheelhouse
+      - name: '🚧 cibuildwheel run - Linux'
+        if: matrix.os == 'ubuntu-latest'
+        uses: pypa/cibuildwheel@v2.21.2
+        env:
+          CIBW_BUILD_FRONTEND: build
+          CIBW_SKIP: '*36*'
+          CIBW_BUILD: 'cp*'
+          # TODO: Check wheels for i686. Segfault error during pytest execution...
+          CIBW_ARCHS_LINUX: "x86_64 aarch64"
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_COMMAND: pytest {package}/tests
+        with:
+          package-dir: bindings/python
+          output-dir: wheelhouse
 #
 #      - name: '🚧 cibuildwheel run - Windows'
 #        if: matrix.os == 'windows-2019'
@@ -88,21 +88,20 @@ jobs:
 #          package-dir: bindings/python
 #          output-dir: wheelhouse
 #
-#      - name: '🚧 cibuildwheel run - macos x86_84'
-#        if: matrix.os == 'macos-13'
-#        uses: pypa/cibuildwheel@v2.21.2
-#        env:
-#          CIBW_BUILD_FRONTEND: build
-#          CIBW_ARCHS_MACOS: "x86_64"
-#          CIBW_SKIP: '*36*'
-#          CIBW_BUILD: 'cp*'
-#          CIBW_TEST_REQUIRES: pytest
-#          CIBW_TEST_COMMAND: pytest {package}/tests
-#        with:
-#          package-dir: bindings/python
-#          output-dir: wheelhouse
+      - name: '🚧 cibuildwheel run - macos x86_84'
+        if: matrix.os == 'macos-13'
+        uses: pypa/cibuildwheel@v2.21.2
+        env:
+          CIBW_BUILD_FRONTEND: build
+          CIBW_ARCHS_MACOS: "x86_64"
+          CIBW_SKIP: '*36*'
+          CIBW_BUILD: 'cp*'
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_COMMAND: pytest {package}/tests
+        with:
+          package-dir: bindings/python
+          output-dir: wheelhouse
 
-#       TODO: Investigate
       - name: '🚧 cibuildwheel run - macos arm64'
         if: matrix.os == 'macos-14'
         uses: pypa/cibuildwheel@v2.21.2
@@ -111,7 +110,6 @@ jobs:
           CIBW_ARCHS_MACOS: "arm64"
           CIBW_SKIP: '*36* *37*'
           CIBW_BUILD: 'cp*'
-          # CIBW_REPAIR_WHEEL_COMMAND: ''
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: pytest {package}/tests
           # https://github.com/pypa/cibuildwheel/pull/1169
