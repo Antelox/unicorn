@@ -22,13 +22,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - { os: ubuntu-latest, arch: x86_64 }
-        - { os: ubuntu-latest, arch: i686 }
-        - { os: ubuntu-latest, arch: aarch64 }
-        - { os: macos-12, arch: x86_64 }
-        - { os: macos-14, arch: arm64 }
-        - { os: windows-2019, arch: AMD64 }
-        - { os: windows-2019, arch: x86 }
+          - { os: ubuntu-latest, arch: x86_64 }
+          # TODO: Check wheels for i686. Segfault error during pytest execution...
+          # - { os: ubuntu-latest, arch: i686 }
+          - { os: ubuntu-latest, arch: aarch64 }
+          - { os: macos-12, arch: x86_64 }
+          - { os: macos-14, arch: arm64 }
+          - { os: windows-2019, arch: AMD64 }
+          - { os: windows-2019, arch: x86 }
 
     steps:
       - uses: actions/checkout@v4
@@ -74,87 +75,61 @@ jobs:
         with:
           platforms: all
 
-      # TODO: Check wheels for i686. Segfault error during pytest execution...
-      - name: '🚧 cibuildwheel run - Linux x86'
-        if: runner.os == 'Linux' && matrix.arch == 'i686'
+      - name: '🚧 cibuildwheel run - Linux'
+        if: matrix.os == 'ubuntu-latest'
         uses: pypa/cibuildwheel@v2.21.2
         env:
           CIBW_BUILD_FRONTEND: build
           CIBW_SKIP: '*36*'
-          CIBW_BUILD: 'cp38*'
+          CIBW_BUILD: 'cp*'
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_TEST_REQUIRES: pytest
-#          CIBW_BEFORE_ALL: >
-#            printenv &&
-#            /usr/bin/dpkg --add-architecture i386" &&
-#            /usr/bin/apt install -q -y lib32ncurses-dev lib32z1-dev lib32gcc-9-dev libc6-dev-i386 gcc-multilib libcmocka-dev:i386 libcmocka0:i386 libc6:i386 libgcc-s1:i386 ninja-build"
           CIBW_TEST_COMMAND: pytest {package}/tests
-          CIBW_ENVIRONMENT: CFLAGS="-m32" LDFLAGS="-m32" LDFLAGS_STATIC="-m32" UNICORN_QEMU_FLAGS="--cpu=i386"
-          CIBW_ENVIRONMENT_PASS_LINUX: CFLAGS LDFLAGS LDFLAGS_STATIC UNICORN_QEMU_FLAGS
         with:
           package-dir: bindings/python
           output-dir: wheelhouse
 
-#      - name: '🚧 cibuildwheel run - Linux'
-#        if: matrix.os == 'ubuntu-latest'
-#        uses: pypa/cibuildwheel@v2.21.2
-#        env:
-#          CIBW_BUILD_FRONTEND: build
-#          CIBW_SKIP: '*36*'
-#          CIBW_BUILD: 'cp38*'
-#          # TODO: Check wheels for i686. Segfault error during pytest execution...
-##          CIBW_ARCHS_LINUX: "x86_64 aarch64"
-#          CIBW_ARCHS: "${{ matrix.arch }}"
-#          CIBW_TEST_REQUIRES: pytest
-#          CIBW_TEST_COMMAND: pytest {package}/tests
-#        with:
-#          package-dir: bindings/python
-#          output-dir: wheelhouse
-#
-#      - name: '🚧 cibuildwheel run - Windows'
-#        if: matrix.os == 'windows-2019'
-#        uses: pypa/cibuildwheel@v2.21.2
-#        env:
-#          CIBW_BUILD_FRONTEND: build
-#          CIBW_SKIP: '*36*'
-#          CIBW_BUILD: 'cp38*'
-##          CIBW_ARCHS_WINDOWS: "x86 AMD64"
-#          CIBW_ARCHS: "${{ matrix.arch }}"
-#          CIBW_TEST_REQUIRES: pytest
-#          CIBW_TEST_COMMAND: pytest {package}/tests
-#        with:
-#          package-dir: bindings/python
-#          output-dir: wheelhouse
-#
-#      - name: '🚧 cibuildwheel run - macos x86_84'
-#        if: matrix.os == 'macos-12'
-#        uses: pypa/cibuildwheel@v2.21.2
-#        env:
-#          CIBW_BUILD_FRONTEND: build
-##          CIBW_ARCHS_MACOS: "x86_64"
-#          CIBW_SKIP: '*36*'
-#          CIBW_BUILD: 'cp38*'
-#          CIBW_TEST_REQUIRES: pytest
-#          CIBW_TEST_COMMAND: pytest {package}/tests
-#        with:
-#          package-dir: bindings/python
-#          output-dir: wheelhouse
-#
-#      - name: '🚧 cibuildwheel run - macos arm64'
-#        if: matrix.os == 'macos-14'
-#        uses: pypa/cibuildwheel@v2.21.2
-#        env:
-#          CIBW_BUILD_FRONTEND: build
-##          CIBW_ARCHS_MACOS: "arm64"
-#          CIBW_SKIP: '*36* *37*'
-#          CIBW_BUILD: 'cp38*'
-#          CIBW_TEST_REQUIRES: pytest
-#          CIBW_TEST_COMMAND: pytest {package}/tests
-#          # https://github.com/pypa/cibuildwheel/pull/1169
-#          CIBW_TEST_SKIP: "cp38-macosx_*:arm64"
-#        with:
-#          package-dir: bindings/python
-#          output-dir: wheelhouse
+      - name: '🚧 cibuildwheel run - Windows'
+        if: matrix.os == 'windows-2019'
+        uses: pypa/cibuildwheel@v2.21.2
+        env:
+          CIBW_BUILD_FRONTEND: build
+          CIBW_SKIP: '*36*'
+          CIBW_BUILD: 'cp*'
+          CIBW_ARCHS: "${{ matrix.arch }}"
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_COMMAND: pytest {package}/tests
+        with:
+          package-dir: bindings/python
+          output-dir: wheelhouse
+
+      - name: '🚧 cibuildwheel run - macos x86_84'
+        if: matrix.os == 'macos-12'
+        uses: pypa/cibuildwheel@v2.21.2
+        env:
+          CIBW_BUILD_FRONTEND: build
+          CIBW_SKIP: '*36*'
+          CIBW_BUILD: 'cp*'
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_COMMAND: pytest {package}/tests
+        with:
+          package-dir: bindings/python
+          output-dir: wheelhouse
+
+      - name: '🚧 cibuildwheel run - macos arm64'
+        if: matrix.os == 'macos-14'
+        uses: pypa/cibuildwheel@v2.21.2
+        env:
+          CIBW_BUILD_FRONTEND: build
+          CIBW_SKIP: '*36* *37*'
+          CIBW_BUILD: 'cp*'
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_COMMAND: pytest {package}/tests
+          # https://github.com/pypa/cibuildwheel/pull/1169
+          CIBW_TEST_SKIP: "cp38-macosx_*:arm64"
+        with:
+          package-dir: bindings/python
+          output-dir: wheelhouse
 
       # we re-tag the oldest python3 version wheel with py2 tag. Hacky but it works...
       - name: '🚧 Python 2.7 wheels re-tagging - Windows'
@@ -195,7 +170,7 @@ jobs:
           path: bindings/python/dist/*.tar.gz
 
   publish:
-    needs: [build_wheels, make_sdist]
+    needs: [ build_wheels, make_sdist ]
     environment: pypi
     permissions:
       id-token: write
