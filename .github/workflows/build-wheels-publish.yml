@@ -16,30 +16,37 @@ on:
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }}
+    name: Build wheels on ${{ matrix.os }} - ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-2019, macos-13, macos-14 ]
+        include:
+        - { os: ubuntu-latest, arch: x86_64 }
+        - { os: ubuntu-latest, arch: i686 }
+        - { os: ubuntu-latest, arch: aarch64 }
+        - { os: macos-12, arch: x86_64 }
+        - { os: macos-14, arch: arm64 }
+        - { os: windows-2019, arch: AMD64 }
+        - { os: windows-2019, arch: x86 }
 
     steps:
       - uses: actions/checkout@v4
 
       - name: '🛠️ Add msbuild to PATH'
-        if: matrix.os == 'windows-2019'
+        if: runner.os == 'Windows'
         uses: microsoft/setup-msbuild@v2
         with:
           vs-version: '16.5'
 
       - name: '🛠️ Win build dependencies'
-        if: matrix.os == 'windows-2019'
+        if: runner.os == 'Windows'
         shell: bash
         run: |
           choco install ninja cmake
 
       - name: '🛠️ macOS dependencies'
-        if: contains(matrix.os, 'macos')
+        if: runner.os == 'macOS'
         run: |
           brew install ninja
 
@@ -49,11 +56,17 @@ jobs:
         with:
           python-version: 3.8
 
-      - name: '🛠️ Set up MSVC x86/x64'
+      - name: '🛠️ Win MSVC 32 dev cmd setup'
+        if: runner.os == 'Windows' && matrix.arch == 'x86'
         uses: ilammy/msvc-dev-cmd@v1
-        if: runner.os == 'Windows'
         with:
-          arch: amd64_x86
+          arch: x86
+
+      - name: '🛠️ Win MSVC 64 dev cmd setup'
+        if: runner.os == 'Windows' && matrix.arch == 'AMD64'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
 
       - name: '🛠️ Set up QEMU'
         if: runner.os == 'Linux'
@@ -61,20 +74,21 @@ jobs:
         with:
           platforms: all
 
-#      - name: '🚧 cibuildwheel run - Linux'
-#        if: matrix.os == 'ubuntu-latest'
-#        uses: pypa/cibuildwheel@v2.21.2
-#        env:
-#          CIBW_BUILD_FRONTEND: build
-#          CIBW_SKIP: '*36*'
-#          CIBW_BUILD: 'cp*'
-#          # TODO: Check wheels for i686. Segfault error during pytest execution...
+      - name: '🚧 cibuildwheel run - Linux'
+        if: matrix.os == 'ubuntu-latest'
+        uses: pypa/cibuildwheel@v2.21.2
+        env:
+          CIBW_BUILD_FRONTEND: build
+          CIBW_SKIP: '*36*'
+          CIBW_BUILD: 'cp38*'
+          # TODO: Check wheels for i686. Segfault error during pytest execution...
 #          CIBW_ARCHS_LINUX: "x86_64 aarch64"
-#          CIBW_TEST_REQUIRES: pytest
-#          CIBW_TEST_COMMAND: pytest {package}/tests
-#        with:
-#          package-dir: bindings/python
-#          output-dir: wheelhouse
+          CIBW_ARCHS: "${{ matrix.arch }}"
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_COMMAND: pytest {package}/tests
+        with:
+          package-dir: bindings/python
+          output-dir: wheelhouse
 
       - name: '🚧 cibuildwheel run - Windows'
         if: matrix.os == 'windows-2019'
@@ -83,44 +97,45 @@ jobs:
           CIBW_BUILD_FRONTEND: build
           CIBW_SKIP: '*36*'
           CIBW_BUILD: 'cp38*'
-          CIBW_ARCHS_WINDOWS: "x86 AMD64"
+#          CIBW_ARCHS_WINDOWS: "x86 AMD64"
+          CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: pytest {package}/tests
         with:
           package-dir: bindings/python
           output-dir: wheelhouse
-#
-#      - name: '🚧 cibuildwheel run - macos x86_84'
-#        if: matrix.os == 'macos-13'
-#        uses: pypa/cibuildwheel@v2.21.2
-#        env:
-#          CIBW_BUILD_FRONTEND: build
-#          CIBW_ARCHS_MACOS: "x86_64"
-#          CIBW_SKIP: '*36*'
-#          CIBW_BUILD: 'cp*'
-#          CIBW_TEST_REQUIRES: pytest
-#          CIBW_TEST_COMMAND: pytest {package}/tests
-#        with:
-#          package-dir: bindings/python
-#          output-dir: wheelhouse
-#
-#      - name: '🚧 cibuildwheel run - macos arm64'
-#        if: matrix.os == 'macos-14'
-#        uses: pypa/cibuildwheel@v2.21.2
-#        env:
-#          CIBW_BUILD_FRONTEND: build
-#          CIBW_ARCHS_MACOS: "arm64"
-#          CIBW_SKIP: '*36* *37*'
-#          CIBW_BUILD: 'cp*'
-#          CIBW_TEST_REQUIRES: pytest
-#          CIBW_TEST_COMMAND: pytest {package}/tests
-#          # https://github.com/pypa/cibuildwheel/pull/1169
-#          CIBW_TEST_SKIP: "cp38-macosx_*:arm64"
-#        with:
-#          package-dir: bindings/python
-#          output-dir: wheelhouse
 
-      # we re-tag the older python3 version wheel with py2 tag. Hacky but it works...
+      - name: '🚧 cibuildwheel run - macos x86_84'
+        if: matrix.os == 'macos-12'
+        uses: pypa/cibuildwheel@v2.21.2
+        env:
+          CIBW_BUILD_FRONTEND: build
+#          CIBW_ARCHS_MACOS: "x86_64"
+          CIBW_SKIP: '*36*'
+          CIBW_BUILD: 'cp38*'
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_COMMAND: pytest {package}/tests
+        with:
+          package-dir: bindings/python
+          output-dir: wheelhouse
+
+      - name: '🚧 cibuildwheel run - macos arm64'
+        if: matrix.os == 'macos-14'
+        uses: pypa/cibuildwheel@v2.21.2
+        env:
+          CIBW_BUILD_FRONTEND: build
+#          CIBW_ARCHS_MACOS: "arm64"
+          CIBW_SKIP: '*36* *37*'
+          CIBW_BUILD: 'cp38*'
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_COMMAND: pytest {package}/tests
+          # https://github.com/pypa/cibuildwheel/pull/1169
+          CIBW_TEST_SKIP: "cp38-macosx_*:arm64"
+        with:
+          package-dir: bindings/python
+          output-dir: wheelhouse
+
+      # we re-tag the oldest python3 version wheel with py2 tag. Hacky but it works...
       - name: '🚧 Python 2.7 wheels re-tagging - Windows'
         if: matrix.os == 'windows-2019'
         run: |
