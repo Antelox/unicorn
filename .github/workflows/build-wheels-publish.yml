@@ -25,7 +25,8 @@ jobs:
           - { os: ubuntu-latest, arch: x86_64 }
           # TODO: Check wheels for i686. Segfault error during pytest execution...
           # - { os: ubuntu-latest, arch: i686 }
-          - { os: ubuntu-latest, arch: aarch64 }
+          - { os: ubuntu-latest, arch: aarch64, tagver: '312', tagtype: 'manylinux'}
+          - { os: ubuntu-latest, arch: aarch64, tagver: '312', tagtype: 'musllinux'}
           - { os: macos-12, arch: x86_64 }
           - { os: macos-14, arch: arm64 }
           - { os: windows-2019, arch: AMD64 }
@@ -72,16 +73,29 @@ jobs:
       - name: '🛠️ Set up QEMU'
         if: runner.os == 'Linux'
         uses: docker/setup-qemu-action@v3
-        with:
-          platforms: all
 
       - name: '🚧 cibuildwheel run - Linux'
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest' && matrix.arch != 'aarch64'
         uses: pypa/cibuildwheel@v2.21.2
         env:
           CIBW_BUILD_FRONTEND: build
           CIBW_SKIP: '*36*'
           CIBW_BUILD: 'cp*'
+          CIBW_ARCHS: "${{ matrix.arch }}"
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_COMMAND: pytest {package}/tests
+        with:
+          package-dir: bindings/python
+          output-dir: wheelhouse
+
+      # TODO: aarch64 builds are super slow due to QEMU emulation. Building py3.12 only for now...
+      - name: '🚧 cibuildwheel run - Linux - aarch64 - python ${{ matrix.tagver }} for ${{ matrix.tagtype }}'
+        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'aarch64'
+        uses: pypa/cibuildwheel@v2.21.2
+        env:
+          CIBW_BUILD_FRONTEND: build
+          CIBW_SKIP: '*36*'
+          CIBW_BUILD: cp${{ matrix.tagver }}*${{ matrix.tagtype }}*
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: pytest {package}/tests
