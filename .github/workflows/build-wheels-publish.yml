@@ -25,7 +25,7 @@ jobs:
           # TODO: Check wheels for i686. Segfault error during pytest execution...
           # - { os: ubuntu-latest, arch: i686 }
           # x86_64 - manylinux
-          - { os: ubuntu-latest, arch: x86_64, tagver: '37', tagtype: 'manylinux' }
+          - { os: ubuntu-latest, arch: x86_64, tagver: '37', tagtype: 'manylinux', tagrun: ${{ startsWith(github.ref, 'refs/tags') }} }
           - { os: ubuntu-latest, arch: x86_64, tagver: '38', tagtype: 'manylinux' }
           - { os: ubuntu-latest, arch: x86_64, tagver: '39', tagtype: 'manylinux' }
           - { os: ubuntu-latest, arch: x86_64, tagver: '310', tagtype: 'manylinux' }
