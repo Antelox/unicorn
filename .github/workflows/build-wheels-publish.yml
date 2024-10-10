@@ -22,11 +22,40 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-latest, arch: x86_64 }
           # TODO: Check wheels for i686. Segfault error during pytest execution...
           # - { os: ubuntu-latest, arch: i686 }
-          - { os: ubuntu-latest, arch: aarch64, tagver: '312', tagtype: 'manylinux'}
-          - { os: ubuntu-latest, arch: aarch64, tagver: '312', tagtype: 'musllinux'}
+          # x86_64 - manylinux
+          - { os: ubuntu-latest, arch: x86_64, tagver: '37', tagtype: 'manylinux' }
+          - { os: ubuntu-latest, arch: x86_64, tagver: '38', tagtype: 'manylinux' }
+          - { os: ubuntu-latest, arch: x86_64, tagver: '39', tagtype: 'manylinux' }
+          - { os: ubuntu-latest, arch: x86_64, tagver: '310', tagtype: 'manylinux' }
+          - { os: ubuntu-latest, arch: x86_64, tagver: '311', tagtype: 'manylinux' }
+          - { os: ubuntu-latest, arch: x86_64, tagver: '312', tagtype: 'manylinux' }
+          - { os: ubuntu-latest, arch: x86_64, tagver: '313', tagtype: 'manylinux' }
+          # x86_64 - musllinux
+          - { os: ubuntu-latest, arch: x86_64, tagver: '37', tagtype: 'musllinux' }
+          - { os: ubuntu-latest, arch: x86_64, tagver: '38', tagtype: 'musllinux' }
+          - { os: ubuntu-latest, arch: x86_64, tagver: '39', tagtype: 'musllinux' }
+          - { os: ubuntu-latest, arch: x86_64, tagver: '310', tagtype: 'musllinux' }
+          - { os: ubuntu-latest, arch: x86_64, tagver: '311', tagtype: 'musllinux' }
+          - { os: ubuntu-latest, arch: x86_64, tagver: '312', tagtype: 'musllinux' }
+          - { os: ubuntu-latest, arch: x86_64, tagver: '313', tagtype: 'musllinux' }
+          # aarch64 - manylinux
+          - { os: ubuntu-latest, arch: aarch64, tagver: '37', tagtype: 'manylinux' }
+          - { os: ubuntu-latest, arch: aarch64, tagver: '38', tagtype: 'manylinux' }
+          - { os: ubuntu-latest, arch: aarch64, tagver: '39', tagtype: 'manylinux' }
+          - { os: ubuntu-latest, arch: aarch64, tagver: '310', tagtype: 'manylinux' }
+          - { os: ubuntu-latest, arch: aarch64, tagver: '311', tagtype: 'manylinux' }
+          - { os: ubuntu-latest, arch: aarch64, tagver: '312', tagtype: 'manylinux' }
+          - { os: ubuntu-latest, arch: aarch64, tagver: '313', tagtype: 'manylinux' }
+          # aarch64 - musllinux
+          - { os: ubuntu-latest, arch: aarch64, tagver: '37', tagtype: 'musllinux' }
+          - { os: ubuntu-latest, arch: aarch64, tagver: '38', tagtype: 'musllinux' }
+          - { os: ubuntu-latest, arch: aarch64, tagver: '39', tagtype: 'musllinux' }
+          - { os: ubuntu-latest, arch: aarch64, tagver: '310', tagtype: 'musllinux' }
+          - { os: ubuntu-latest, arch: aarch64, tagver: '311', tagtype: 'musllinux' }
+          - { os: ubuntu-latest, arch: aarch64, tagver: '312', tagtype: 'musllinux' }
+          - { os: ubuntu-latest, arch: aarch64, tagver: '313', tagtype: 'musllinux' }
           - { os: macos-12, arch: x86_64 }
           - { os: macos-14, arch: arm64 }
           - { os: windows-2019, arch: AMD64 }
@@ -74,29 +103,14 @@ jobs:
         if: runner.os == 'Linux'
         uses: docker/setup-qemu-action@v3
 
-      - name: '🚧 cibuildwheel run - Linux'
-        if: matrix.os == 'ubuntu-latest' && matrix.arch != 'aarch64'
+      # NOTE: aarch64 builds are super slow due to QEMU emulation. Making this to parallelize...
+      - name: '🚧 cibuildwheel run - Linux - ${{ matrix.arch }} - python ${{ matrix.tagver }} for ${{ matrix.tagtype }}'
+        if: matrix.os == 'ubuntu-latest'
         uses: pypa/cibuildwheel@v2.21.2
         env:
           CIBW_BUILD_FRONTEND: build
-          CIBW_SKIP: '*36*'
-          CIBW_BUILD: 'cp*'
-          CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_TEST_REQUIRES: pytest
-          CIBW_TEST_COMMAND: pytest {package}/tests
-        with:
-          package-dir: bindings/python
-          output-dir: wheelhouse
-
-      # TODO: aarch64 builds are super slow due to QEMU emulation. Building py3.12 only for now...
-      - name: '🚧 cibuildwheel run - Linux - aarch64 - python ${{ matrix.tagver }} for ${{ matrix.tagtype }}'
-        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'aarch64'
-        uses: pypa/cibuildwheel@v2.21.2
-        env:
-          CIBW_BUILD_FRONTEND: build
-          CIBW_SKIP: '*36*'
           CIBW_BUILD: cp${{ matrix.tagver }}*${{ matrix.tagtype }}*
-          CIBW_ARCHS: "${{ matrix.arch }}"
+          CIBW_ARCHS: ${{ matrix.arch }}
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: pytest {package}/tests
         with:
@@ -145,15 +159,15 @@ jobs:
           package-dir: bindings/python
           output-dir: wheelhouse
 
-      # we re-tag the oldest python3 version wheel with py2 tag. Hacky but it works...
+      # we re-tag cp38 wheel (just an old one) with py2 tag. Hacky but it works...
       - name: '🚧 Python 2.7 wheels re-tagging - Windows'
         if: matrix.os == 'windows-2019'
         run: |
-          python -m pip install -U pip wheel && Get-ChildItem -Path wheelhouse/ -Filter *cp37*.whl | Foreach-Object {
+          python -m pip install -U pip wheel && Get-ChildItem -Path wheelhouse/ -Filter *cp38*.whl | Foreach-Object {
             python -m wheel tags --python-tag='py2' --abi-tag=none $_.FullName
           }
       - name: '🚧 Python 2.7 wheels re-tagging - Non-Windows'
-        if: matrix.os != 'windows-2019'
+        if: matrix.os != 'windows-2019' && matrix.tagver == '38'
         env:
           PIP_BREAK_SYSTEM_PACKAGES: 1
         run: |
