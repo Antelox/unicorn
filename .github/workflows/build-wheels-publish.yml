@@ -28,6 +28,7 @@ env:
   # Enable DEBUG flag either if not tag release or according to manual override
   UNICORN_DEBUG: ${{ inputs.debugMode != '' && inputs.debugMode || startsWith(github.ref, 'refs/tags') && '0' || '1' }}
 
+
 jobs:
   # job to be executed for every push - testing purpose
   build_wheels_python38_only:
