@@ -56,16 +56,19 @@ runs:
           fi
 
           # install pyenv
+          # brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/640594a6d73fea29f7268652ab13d970fa87f287/Formula/p/pyenv.rb
           export PYENV_GIT_TAG=v2.6.6
-          curl https://pyenv.run | bash
+          # curl https://pyenv.run | bash
+          curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
           echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
           echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
           echo 'eval "$(pyenv init - bash)"' >> ~/.bashrc
-        
+          # 
           echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.profile
           echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.profile
           echo 'eval "$(pyenv init - bash)"' >> ~/.profile
           source ~/.bashrc
+          export PATH="$(pyenv root)/shims:$(pyenv root)/bin:$PATH"
         fi
 
         # install python 2.7

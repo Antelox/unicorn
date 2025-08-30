@@ -73,6 +73,11 @@ jobs:
           name=$(echo -n "$name" | sed -e 's/[ \t:\/\\"<>|*?]/-/g' -e 's/--*/-/g' | sed -e 's/\-$//')
           echo "ARTIFACT_NAME=$name" >> $GITHUB_ENV
 
+      - uses: ./.github/actions/python-setup/
+        if: (runner.os == 'Linux' && (matrix.arch == 'x86_64' || matrix.arch == 'aarch64') && matrix.cibw_build == 'cp*-manylinux*') || (runner.os == 'macOS' && matrix.arch == 'arm64') || (runner.os == 'Windows' && matrix.arch == 'AMD64')
+        with:
+          python-version: 2.7
+
       - name: "Increase pagefile to avoid OOM"
         if: runner.os == 'Windows'
         uses: al-cheb/configure-pagefile-action@v1.4
@@ -133,11 +138,6 @@ jobs:
         run: |
           python3 -m pip install -U pip wheel
           python3 -m wheel tags --python-tag='py2' --abi-tag=none wheelhouse/*cp37*.whl
-
-      - uses: ./.github/actions/python-setup/
-        if: (runner.os == 'Linux' && (matrix.arch == 'x86_64' || matrix.arch == 'aarch64') && matrix.cibw_build == 'cp*-manylinux*') || (runner.os == 'macOS' && matrix.arch == 'arm64') || (runner.os == 'Windows' && matrix.arch == 'AMD64')
-        with:
-          python-version: 2.7
 
       # we install and test python2.7 wheels only on native arch
       - name: 'Python 2.7 tests - Windows'
