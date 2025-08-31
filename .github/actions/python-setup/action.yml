@@ -56,16 +56,20 @@ runs:
           fi
 
           # install pyenv
+          brew update
+          brew link --overwrite openssl@1.1
+          brew readline sqlite3 xz tcl-tk@8 libb2 zstd zlib bzip2
+          brew install pyenv --head
           # brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/640594a6d73fea29f7268652ab13d970fa87f287/Formula/p/pyenv.rb
-          export PYENV_GIT_TAG=v2.6.6
+          # export PYENV_GIT_TAG=v2.6.6
           # curl https://pyenv.run | bash
-          curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
+          #curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
           export PATH="$HOME/.pyenv/bin:$PATH"
           export PATH="$(pyenv root)/shims:$(pyenv root)/bin:$PATH"
         fi
 
         # install python 2.7
-        pyenv install 2.7.18
+        PYTHON_CFLAGS="-I$(brew --prefix bzip2)/include" PYTHON_LDFLAGS="-L$(brew --prefix bzip2)/lib" pyenv install 2.7.18
 
     - name: Setup Python Environment
       if: ${{ inputs.python-version == '2.7' }}
