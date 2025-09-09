@@ -36,7 +36,7 @@ Changelog = "https://github.com/unicorn-engine/unicorn/blob/master/ChangeLog"
 
 [project.optional-dependencies]
 test = [
-    "capstone==6.0.0a2;python_version>'3.7'",
+    "capstone==6.0.0a5;python_version>'3.7'",
     "capstone==5.0.1;python_version<='3.7'"
 ]
 
