@@ -2977,6 +2977,71 @@ uc_err uc_ctl(uc_engine *uc, uc_control_type control, ...)
         restore_jit_state(uc);
         break;
 
+    case UC_CTL_PAUTH_SIGN: {
+
+        UC_INIT(uc);
+
+        if (rw == UC_CTL_IO_READ_WRITE) {
+            uint64_t ptr = va_arg(args, uint64_t);
+            int key = va_arg(args, int);
+            uint64_t diversifier = va_arg(args, uint64_t);
+            uint64_t *signed_ptr = va_arg(args, uint64_t *);
+            if (uc->pauth_sign != NULL) {
+                err = uc->pauth_sign(uc, ptr, key, diversifier, signed_ptr);
+            } else {
+                err = UC_ERR_ARG;
+            }
+        } else {
+            err = UC_ERR_ARG;
+        }
+
+        restore_jit_state(uc);
+        break;
+    }
+
+    case UC_CTL_PAUTH_STRIP: {
+
+        UC_INIT(uc);
+
+        if (rw == UC_CTL_IO_READ_WRITE) {
+            uint64_t ptr = va_arg(args, uint64_t);
+            int key = va_arg(args, int);
+            uint64_t *stripped_ptr = va_arg(args, uint64_t *);
+            if (uc->pauth_strip != NULL) {
+                err = uc->pauth_strip(uc, ptr, key, stripped_ptr);
+            } else {
+                err = UC_ERR_ARG;
+            }
+        } else {
+            err = UC_ERR_ARG;
+        }
+
+        restore_jit_state(uc);
+        break;
+    }
+
+    case UC_CTL_PAUTH_AUTH: {
+
+        UC_INIT(uc);
+
+        if (rw == UC_CTL_IO_READ_WRITE) {
+            uint64_t ptr = va_arg(args, uint64_t);
+            int key = va_arg(args, int);
+            uint64_t diversifier = va_arg(args, uint64_t);
+            bool *valid = va_arg(args, bool *);
+            if (uc->pauth_auth != NULL) {
+                err = uc->pauth_auth(uc, ptr, key, diversifier, valid);
+            } else {
+                err = UC_ERR_ARG;
+            }
+        } else {
+            err = UC_ERR_ARG;
+        }
+
+        restore_jit_state(uc);
+        break;
+    }
+
     default:
         err = UC_ERR_ARG;
         break;

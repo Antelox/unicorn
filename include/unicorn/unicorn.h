@@ -605,6 +605,46 @@ typedef enum uc_control_type {
     // controle if context_save/restore should work with snapshots
     // Write: @args = (int)
     UC_CTL_CONTEXT_MODE,
+
+    // Sign a pointer with a given architecture-specific key and a diversifier
+    // (also known as modifier, extra data, discriminator, tweak or salt).  If
+    // the key is currently disabled, the operation returns the unsigned ptr.
+    // ABI-specific string hashing or address blending is up to the caller to
+    // implement.
+    //
+    // Pointer authentication needs to have been set up properly beforehand.
+    // Depending on architecture, current CPU state may determine pointer
+    // layout and other aspects of the operation not explicitly specified as
+    // parameters.
+    //
+    // Read/write: @args = (uint64_t ptr, int key, uint64_t diversifier,
+    //                      uint64_t *signed_ptr)
+    UC_CTL_PAUTH_SIGN,
+
+    // Strip a possibly signed pointer of all PAC bits without authenticating,
+    // returning an unsigned pointer.
+    //
+    // Pointer authentication needs to have been set up properly beforehand.
+    // Depending on architecture, current CPU state may determine pointer
+    // layout and other aspects of the operation not explicitly specified as
+    // parameters.
+    //
+    // Read/write: @args = (uint64_t ptr, int key, uint64_t *stripped_ptr)
+    UC_CTL_PAUTH_STRIP,
+
+    // Authenticate a signed pointer with a given architecture-specific key and
+    // diversifier (also known as modifier, extra data, discriminator, tweak or
+    // salt).  ABI-specific string hashing or address blending is up to the
+    // caller to implement.
+    //
+    // Pointer authentication needs to have been set up properly beforehand.
+    // Depending on architecture, current CPU state may determine pointer
+    // layout and other aspects of the operation not explicitly specified as
+    // parameters.
+    //
+    // Read/write: @args = (uint64_t ptr, int key, uint64_t diversifier,
+    //                      bool *valid)
+    UC_CTL_PAUTH_AUTH,
 } uc_control_type;
 
 /*
@@ -688,6 +728,12 @@ See sample_ctl.c for a detailed example.
     uc_ctl(uc, UC_CTL_WRITE(UC_CTL_TCG_BUFFER_SIZE, 1), (size))
 #define uc_ctl_context_mode(uc, mode)                                          \
     uc_ctl(uc, UC_CTL_WRITE(UC_CTL_CONTEXT_MODE, 1), (mode))
+#define uc_ctl_pauth_sign(uc, ptr, key, diversifier, signed_ptr)               \
+    uc_ctl(uc, UC_CTL_READ_WRITE(UC_CTL_PAUTH_SIGN, 4), (uint64_t)(ptr), (int)(key), (uint64_t)(diversifier), (uint64_t *)(signed_ptr))
+#define uc_ctl_pauth_strip(uc, ptr, key, stripped_ptr)                         \
+    uc_ctl(uc, UC_CTL_READ_WRITE(UC_CTL_PAUTH_STRIP, 3), (uint64_t)(ptr), (int)(key), (uint64_t *)(stripped_ptr))
+#define uc_ctl_pauth_auth(uc, ptr, key, diversifier, valid)                    \
+    uc_ctl(uc, UC_CTL_READ_WRITE(UC_CTL_PAUTH_AUTH, 4), (uint64_t)(ptr), (int)(key), (uint64_t)(diversifier), (uint64_t *)(valid))
 
 // Opaque storage for CPU context, used with uc_context_*()
 struct uc_context;
