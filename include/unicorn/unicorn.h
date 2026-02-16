@@ -193,6 +193,9 @@ typedef enum uc_err {
     UC_ERR_RESOURCE,        // Insufficient resource: uc_emu_start()
     UC_ERR_EXCEPTION,       // Unhandled CPU exception
     UC_ERR_OVERFLOW,        // Provided buffer is not large enough: uc_reg_*2()
+    UC_ERR_MMU_READ,        // The tlb_fill hook returned false for a read access (see tlb_fill hook)
+    UC_ERR_MMU_WRITE,       // The tlb_fill hook returned false for a write operation (see tlb_fill hook)
+    UC_ERR_MMU_FETCH,       // The tlb_fill hook returned false for a fetch (see tlb_fill hook)
 } uc_err;
 
 /*
@@ -645,6 +648,9 @@ typedef enum uc_control_type {
     // Read/write: @args = (uint64_t ptr, int key, uint64_t diversifier,
     //                      bool *valid)
     UC_CTL_PAUTH_AUTH,
+    // read the invalid_addr after an error
+    // Read: @args = (uint64_t*)
+    UC_CTL_INVALID_ADDR,
 } uc_control_type;
 
 /*
@@ -734,6 +740,8 @@ See sample_ctl.c for a detailed example.
     uc_ctl(uc, UC_CTL_READ_WRITE(UC_CTL_PAUTH_STRIP, 3), (uint64_t)(ptr), (int)(key), (uint64_t *)(stripped_ptr))
 #define uc_ctl_pauth_auth(uc, ptr, key, diversifier, valid)                    \
     uc_ctl(uc, UC_CTL_READ_WRITE(UC_CTL_PAUTH_AUTH, 4), (uint64_t)(ptr), (int)(key), (uint64_t)(diversifier), (uint64_t *)(valid))
+#define uc_ctl_get_invalid_addr(uc, addr)                                    \
+    uc_ctl(uc, UC_CTL_READ(UC_CTL_INVALID_ADDR, 1), (addr))
 
 // Opaque storage for CPU context, used with uc_context_*()
 struct uc_context;

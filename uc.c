@@ -191,6 +191,12 @@ const char *uc_strerror(uc_err code)
         return "Unhandled CPU exception (UC_ERR_EXCEPTION)";
     case UC_ERR_OVERFLOW:
         return "Provided buffer is too small (UC_ERR_OVERFLOW)";
+    case UC_ERR_MMU_READ:
+        return "The tlb_fill hook returned false for a read (UC_ERR_MMU_READ)";
+    case UC_ERR_MMU_WRITE:
+        return "The tlb_fill hook returned false for a write (UC_ERR_MMU_WRITE)";
+    case UC_ERR_MMU_FETCH:
+        return "The tlb_fill hook returned false for a fetch (UC_ERR_MMU_FETCH)";
     }
 }
 
@@ -3041,6 +3047,14 @@ uc_err uc_ctl(uc_engine *uc, uc_control_type control, ...)
         restore_jit_state(uc);
         break;
     }
+    case UC_CTL_INVALID_ADDR:
+        if (rw == UC_CTL_IO_READ) {
+            uint64_t *invalid_addr = va_arg(args, uint64_t *);
+            *invalid_addr = uc->invalid_addr;
+        } else {
+            err = UC_ERR_ARG;
+        }
+        break;
 
     default:
         err = UC_ERR_ARG;
