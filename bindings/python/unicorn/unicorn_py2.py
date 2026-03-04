@@ -103,8 +103,6 @@ else:
     raise ImportError("ERROR: fail to load the dynamic library.")
 
 
-# __version__ = "%u.%u.%u" % (uc.UC_VERSION_MAJOR, uc.UC_VERSION_MINOR, uc.UC_VERSION_EXTRA)
-
 # setup all the function prototype
 def _setup_prototype(lib, fname, restype, *argtypes):
     try:
