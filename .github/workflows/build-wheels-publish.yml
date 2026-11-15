@@ -121,6 +121,12 @@ jobs:
           CIBW_TEST_COMMAND: 'python -m unittest discover -v {project}/tests/regress "*.py"'
           # https://github.com/pypa/cibuildwheel/pull/1169
           CIBW_TEST_SKIP: "cp38-macosx_*:arm64"
+          CIBW_MANYLINUX_I686_IMAGE: manylinux2014
+          PIP_DEFAULT_TIMEOUT: 100
+          PIP_RETRIES: 15
+          CIBW_BEFORE_ALL_LINUX: |
+            echo "nameserver 8.8.8.8" > /etc/resolv.conf
+            echo "nameserver 1.1.1.1" >> /etc/resolv.conf
         with:
           package-dir: bindings/python
           output-dir: wheelhouse
