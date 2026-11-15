@@ -43,7 +43,7 @@ jobs:
         include:
           # NOTE: Doing this to parallelize and speed up workflow
           # i686 - manylinux
-          - { os: ubuntu-latest, arch: i686, cibw_build: 'cp*-manylinux*', cibw_skip: 'cp36*' }
+          - { os: ubuntu-latest, arch: i686, cibw_build: 'cp*-manylinux*', cibw_skip: 'cp36* cp37*' }
           # i686 - musllinux
           - { os: ubuntu-latest, arch: i686, cibw_build: 'cp*-musllinux*', cibw_skip: 'cp36*' }
           # x86_64 - manylinux
